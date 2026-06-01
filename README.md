@@ -25,6 +25,7 @@ python bench.py                      # default 6-model set
 # or pick your own:
 python bench.py --models mlx-community/Qwen3-4B-4bit mlx-community/Qwen3-8B-4bit
 python bench.py --max-tokens 256
+python bench.py --card                # render a shareable scorecard PNG → results/card.png
 ```
 
 First run downloads each model (cached afterward in `~/.cache/huggingface`). Results stream to

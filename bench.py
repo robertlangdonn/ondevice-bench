@@ -124,6 +124,40 @@ def orchestrate(models, max_tokens, timeout, out):
     print(f"\nRaw: {out}")
 
 
+def make_card(results_path, out):
+    """Render a shareable scorecard PNG from a results.json — `--card`."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    d = json.load(open(results_path))
+    rows = [(r["model"].split("/")[-1], None if "error" in r else r.get("gen_tps")) for r in d][::-1]
+    names = [n for n, _ in rows]
+    vals = [v or 0 for _, v in rows]
+    labels = [f"{v} t/s" if v else "DNF" for _, v in rows]
+    PAPER, INK, RED, MUTED, BAR = "#f2ede4", "#1a1814", "#c0392b", "#7a7468", "#d8d0c2"
+
+    fig, ax = plt.subplots(figsize=(10, 5.6))
+    fig.patch.set_facecolor(PAPER)
+    ax.set_facecolor(PAPER)
+    bars = ax.barh(names, vals, height=0.62, color=[RED if v else BAR for v in vals])
+    top = max(vals) or 1
+    for i, b in enumerate(bars):
+        ax.text(b.get_width() + top * 0.02, b.get_y() + b.get_height() / 2, labels[i],
+                va="center", fontsize=11, color=(INK if vals[i] else RED))
+    ax.set_title("Local LLM speed — generation tokens/sec (4-bit, MLX)",
+                 loc="left", color=INK, fontsize=15, pad=14)
+    ax.set_xticks([])
+    ax.tick_params(colors=INK, length=0)
+    for s in ax.spines.values():
+        s.set_visible(False)
+    ax.margins(x=0.18)
+    fig.text(0.99, 0.02, "prasadkhake.com", ha="right", color=MUTED, fontsize=9)
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out, facecolor=PAPER, bbox_inches="tight", dpi=140)
+    print("wrote", out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--single", help="internal: bench one model and print JSON")
@@ -131,10 +165,14 @@ def main():
     ap.add_argument("--max-tokens", type=int, default=256)
     ap.add_argument("--timeout", type=int, default=300, help="per-model wall-clock budget (s)")
     ap.add_argument("--out", default="results/results.json")
+    ap.add_argument("--card", action="store_true", help="render a shareable scorecard from --out")
+    ap.add_argument("--card-out", default="results/card.png")
     args = ap.parse_args()
 
     if args.single:
         run_single(args.single, args.max_tokens)
+    elif args.card:
+        make_card(args.out, args.card_out)
     else:
         orchestrate(args.models, args.max_tokens, args.timeout, args.out)
 
