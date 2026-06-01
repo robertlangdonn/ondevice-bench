@@ -3,6 +3,10 @@
 Honest numbers for running LLMs **locally on a Mac**, measured on the machine itself.
 Most published benchmarks run on datacenter GPUs; this one targets the laptop in front of you.
 
+![Local LLM speed on a 16 GB MacBook Air (M3): 1B ~39 t/s, 4B-class ~10 t/s, 7–8B ~5 t/s, 9B did not finish](results/chart.png)
+
+Full write-up: **[What actually runs well on a 16 GB MacBook](https://prasadkhake.com/blog/16gb-mac-llm)**.
+
 Measured per model (MLX, 4-bit unless noted):
 
 | Metric | What it means |
@@ -30,7 +34,7 @@ First run downloads each model (cached afterward in `~/.cache/huggingface`). Res
 
 Record yours here so the numbers mean something:
 
-- **Machine:** MacBook (Apple M3), 16 GB unified memory, macOS 26.x
+- **Machine:** MacBook Air 15-inch (M3, 8-core), 16 GB unified memory, macOS 26.5
 - **mlx-lm:** (printed by `pip show mlx-lm`)
 
 ## Roadmap (next data points)

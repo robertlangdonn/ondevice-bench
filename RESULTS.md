@@ -1,6 +1,7 @@
-# Results — local LLMs on a 16 GB MacBook (Apple M3, base)
+# Results — local LLMs on a MacBook Air 15″ (M3, 16 GB)
 
-**Setup:** MacBook M3 (base), 16 GB unified memory · MLX (mlx-lm 0.31.3) · 4-bit models ·
+**Setup:** MacBook Air 15-inch (Mac15,13), Apple M3 (8-core), 16 GB unified memory, macOS 26.5 ·
+MLX (mlx-lm 0.31.3) · 4-bit models ·
 256 max tokens · per-model warmup · each model in a fresh subprocess · run under `caffeinate`
 · 300 s per-model timeout.
 
@@ -20,8 +21,13 @@ shape (and the 9B wall) is stable across runs.
 
 ## Takeaways
 - **1B flies** (~40 t/s), **4B-class is comfortable** (~10–13 t/s), **7–8B is the practical edge** (~5–7 t/s).
-- **9B is the wall** on 16 GB: model + OS + browser pushes past real RAM, swap kicks in, generation crawls. With apps closed it may *just* fit — but it's the ceiling.
-- **Peak RAM ≈ model size at 4-bit** + headroom; an 8B sits ~4.7 GB, leaving little slack on 16 GB once the OS and a browser are accounted for.
+- **8B is the comfortable ceiling; 9B is over the line** on a 16 GB Mac *you're actually working on.*
+  The 9B-4bit (~5–6 GB) DNF'd in **two independent runs — including one that started with 67% RAM
+  free** — because macOS (~4 GB) + an editor + a browser already claim most of 16 GB, leaving only
+  ~4–6 GB for the model. It tips into swap and generation crawls. (It may fit on a freshly-rebooted
+  machine with nothing else open — untested, and not how anyone actually uses a laptop.)
+- **Peak RAM ≈ model size at 4-bit**; an 8B sits ~4.7 GB, which *just* fits alongside real apps —
+  almost no slack left on 16 GB.
 
 ## Methodology notes (things that bit us)
 1. **Warmup** — the first generation pays a one-time Metal kernel-compile cost; warm up before timing.

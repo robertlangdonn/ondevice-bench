@@ -1,0 +1,6 @@
+[
+  {
+    "model": "mlx-community/Qwen3.5-9B-MLX-4bit",
+    "error": "DNF \u2014 exceeded 300s (memory/swap pressure on this machine)"
+  }
+]
