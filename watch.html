@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>On Device — live benchmark</title>
+<style>
+  :root{--paper:#f2ede4;--ink:#1a1814;--muted:#7a7468;--red:#c0392b;--border:#c8c2b5;--mid:#ede8df}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:ui-monospace,'SF Mono',Menlo,monospace;
+       line-height:1.5;padding:3rem 1.5rem;min-height:100vh}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:400;font-size:2rem;margin-bottom:.25rem}
+  .sub{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem}
+  .prog{font-size:.72rem;letter-spacing:.06em;color:var(--muted);margin:1.25rem 0 .75rem;border-left:3px solid var(--red);padding-left:.75rem}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  th,td{text-align:right;padding:.55rem .5rem;border-bottom:1px solid var(--border)}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400}
+  td.name{font-family:Georgia,serif;font-style:italic;font-size:.95rem}
+  tr.done td{color:var(--ink)}
+  tr.run{background:var(--mid)}
+  tr.run td.name::after{content:' generating…';font-family:ui-monospace,monospace;font-style:normal;font-size:.62rem;
+       letter-spacing:.08em;text-transform:uppercase;color:var(--red)}
+  tr.queued td{color:var(--muted);opacity:.55}
+  .err{color:var(--red);font-size:.7rem}
+  .foot{margin-top:2rem;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .dot{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>On Device <span class="dot">·</span> live benchmark</h1>
+  <div class="sub">Apple M3 · 16 GB · MLX · 4-bit</div>
+  <div class="prog" id="prog">starting…</div>
+  <table>
+    <thead><tr><th>Model</th><th>Load (s)</th><th>Prompt t/s</th><th>Gen t/s</th><th>Peak RAM (GB)</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="foot">Prasad Khake · prasadkhake.com · auto-refreshes every 2s</div>
+</div>
+<script>
+  const MODELS = [
+    "mlx-community/Llama-3.2-1B-Instruct-4bit",
+    "mlx-community/Qwen3-4B-4bit",
+    "mlx-community/Qwen3.5-4B-4bit",
+    "mlx-community/Phi-3.5-mini-instruct-4bit",
+    "mlx-community/Falcon3-7B-Instruct-4bit",
+    "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit",
+    "mlx-community/Qwen3.5-9B-MLX-4bit",
+  ];
+  const short = m => m.split('/').pop();
+  const cell = v => (v ?? v === 0) ? v : '—';
+
+  async function tick(){
+    let data = [];
+    try { const r = await fetch('results/results.json?_=' + Date.now()); if (r.ok) data = await r.json(); } catch(e){}
+    const by = {}; data.forEach(d => by[d.model] = d);
+    const done = data.length;
+    const prog = document.getElementById('prog');
+    prog.textContent = done >= MODELS.length
+      ? `complete — ${MODELS.length}/${MODELS.length} models`
+      : `${done}/${MODELS.length} complete · now running ${short(MODELS[done] || '')}`;
+
+    const rows = MODELS.map((m, i) => {
+      const r = by[m];
+      if (r && r.error) return `<tr class="done"><td class="name">${short(m)}</td><td colspan="4" class="err">${r.error}</td></tr>`;
+      if (r) return `<tr class="done"><td class="name">${short(m)}</td><td>${cell(r.load_s)}</td><td>${cell(r.prompt_tps)}</td><td>${cell(r.gen_tps)}</td><td>${cell(r.peak_gb)}</td></tr>`;
+      const cls = i === done ? 'run' : 'queued';
+      return `<tr class="${cls}"><td class="name">${short(m)}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
+    }).join('');
+    document.getElementById('rows').innerHTML = rows;
+  }
+  tick(); setInterval(tick, 2000);
+</script>
+</body>
+</html>
