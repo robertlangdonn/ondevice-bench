@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breaking the 16 GB wall — live</title>
+<style>
+  :root{--paper:#f2ede4;--ink:#1a1814;--muted:#7a7468;--red:#c0392b;--border:#c8c2b5;--mid:#ede8df;--green:#2e7d52}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:ui-monospace,'SF Mono',Menlo,monospace;line-height:1.5;padding:3rem 1.5rem;min-height:100vh}
+  .wrap{max-width:940px;margin:0 auto}
+  h1{font-family:Georgia,serif;font-style:italic;font-weight:400;font-size:2rem;margin-bottom:.25rem}
+  .sub{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .prog{font-size:.72rem;letter-spacing:.06em;color:var(--muted);margin:1.25rem 0 .75rem;border-left:3px solid var(--red);padding-left:.75rem}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  th,td{text-align:right;padding:.55rem .5rem;border-bottom:1px solid var(--border)}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400}
+  td.name{font-family:Georgia,serif;font-style:italic;font-size:.95rem}
+  td.tag{font-family:ui-monospace,monospace;font-style:normal;font-size:.68rem;color:var(--muted)}
+  tr.run{background:var(--mid)}
+  tr.run td.name::after{content:' running…';font-family:ui-monospace,monospace;font-style:normal;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red)}
+  tr.queued td{color:var(--muted);opacity:.55}
+  .ok{color:var(--green)}
+  .err{color:var(--red);font-size:.7rem}
+  .foot{margin-top:2rem;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .dot{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Breaking the 16 GB wall <span class="dot">·</span> live</h1>
+  <div class="sub">MacBook Air 15″ · M3 · 16 GB · MLX · can a 12–14B run where the 9B couldn't?</div>
+  <div class="prog" id="prog">starting…</div>
+  <table>
+    <thead><tr><th>Model</th><th>Bits</th><th>Load s</th><th>Prompt t/s</th><th>Gen t/s</th><th>Peak GB</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="foot">Prasad Khake · prasadkhake.com · auto-refreshes every 2s · reads results/wall.json</div>
+</div>
+<script>
+  // [id, label, bits, approx GB]
+  const MODELS = [
+    ["mlx-community/Meta-Llama-3.1-8B-Instruct-4bit", "Llama-3.1-8B (anchor)", "4-bit", "~4.7"],
+    ["mlx-community/gemma-3-12b-it-qat-3bit", "Gemma-3-12B (QAT)", "3-bit", "~6"],
+    ["mlx-community/Qwen3-14B-3bit", "Qwen3-14B", "3-bit", "~6"],
+  ];
+  const short = id => { const m = MODELS.find(x=>x[0]===id); return m? m[1] : id.split('/').pop(); };
+  const cell = v => (v||v===0)?v:'—';
+  async function tick(){
+    let data=[];
+    try{ const r=await fetch('results/wall.json?_='+Date.now()); if(r.ok) data=await r.json(); }catch(e){}
+    const by={}; data.forEach(d=>by[d.model]=d);
+    const done=data.length;
+    document.getElementById('prog').textContent = done>=MODELS.length
+      ? `done — ${MODELS.length} models`
+      : `${done}/${MODELS.length} · now running ${short((MODELS[done]||[])[0]||'')}`;
+    document.getElementById('rows').innerHTML = MODELS.map((m,i)=>{
+      const [id,label,bits,gb]=m; const r=by[id];
+      if(r && r.error) return `<tr><td class="name">${label}</td><td class="tag">${bits}</td><td colspan="4" class="err">DNF — won't fit</td></tr>`;
+      if(r) return `<tr><td class="name ok">${label}</td><td class="tag">${bits}</td><td>${cell(r.load_s)}</td><td>${cell(r.prompt_tps)}</td><td class="ok">${cell(r.gen_tps)}</td><td>${cell(r.peak_gb)}</td></tr>`;
+      const cls=i===done?'run':'queued';
+      return `<tr class="${cls}"><td class="name">${label}</td><td class="tag">${bits}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
+    }).join('');
+  }
+  tick(); setInterval(tick,2000);
+</script>
+</body>
+</html>
