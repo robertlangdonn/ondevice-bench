@@ -77,7 +77,18 @@ Record yours here so the numbers mean something:
 - **Quantization deep-dive** — group size, what degrades first.
 - **Per-model peak RAM in the quality suite** — wire clean per-model memory into `quality.py` output.
 
+## Writeups
+
+Analysis built on this benchmark, newest first:
+
+- [My benchmark graded "7! = 5040" as wrong — and three other ways it lied](https://prasadkhake.com/blog/benchmark-bugs-that-inflated-my-scores) — the methodology bugs above, and how a false fail hides in plain sight.
+- [One flag makes Qwen3-4B beat Llama-3.1-8B — at half the RAM](https://prasadkhake.com/blog/qwen3-4b-thinking-flag-16gb-mac) — `enable_thinking=False` and the on-device token-budget trap.
+- [Gemma 4 12B on a 16 GB Mac: the multimodal tax](https://prasadkhake.com/blog/gemma-4-12b-m3-benchmark) — 11 GB / 2.7 tok/s for no text-quality gain.
+- [Gemma-3-12B vs Qwen3-14B: quantization method over size](https://prasadkhake.com/blog/gemma-3-12b-vs-qwen3-14b-16gb-mac) — QAT 3-bit vs naïve 3-bit.
+- [What actually runs well on a 16 GB Mac](https://prasadkhake.com/blog/16gb-mac-llm) — the speed benchmark and the 8B ceiling.
+
 ## Why this exists
 
 Part of an "On Device" series — getting LLMs to run well on real, consumer hardware.
-Writeups: [prasadkhake.com](https://prasadkhake.com).
+More writeups: [prasadkhake.com](https://prasadkhake.com).
+
