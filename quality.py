@@ -29,7 +29,7 @@ CODING_TASKS = [
     {
         "id": "fizzbuzz",
         "prompt": "Write a Python function fizzbuzz(n) that returns a list of strings from 1 to n: 'Fizz' for multiples of 3, 'Buzz' for multiples of 5, 'FizzBuzz' for both, otherwise the number as a string. Print fizzbuzz(15).",
-        "check": lambda out: "FizzBuzz" in out and out.strip().split("\n")[-1].strip().endswith("FizzBuzz"),
+        "check": lambda out: _fizzbuzz_ok(out),
     },
     {
         "id": "fibonacci",
@@ -151,6 +151,22 @@ FACTUAL_TASKS = [
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _fizzbuzz_ok(out: str) -> bool:
+    """Correctness of fizzbuzz(15) output, INDEPENDENT of print style.
+
+    The old check required the last line to endswith("FizzBuzz"), which fails a
+    correct `print(fizzbuzz(15))` (a list repr ends with `']`) while passing a
+    line-per-element print — i.e. it scored output FORMAT, not correctness. This
+    extracts the token stream and looks for the exact expected sequence as a
+    contiguous run, so list-repr, line-per-element, and label-prefixed output
+    ("fizzbuzz(15): [...]") all score on whether the answer is right.
+    """
+    exp = ["1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8",
+           "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"]
+    toks = re.findall(r"FizzBuzz|Fizz|Buzz|\d+", out)
+    return any(toks[i:i + len(exp)] == exp for i in range(len(toks) - len(exp) + 1))
+
 
 def _clean_math(text: str) -> str:
     """Strip LaTeX boxes, bold markdown, trailing punctuation."""
